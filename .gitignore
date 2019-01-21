@@ -1,2 +1,4 @@
 /runtime
 sftp-config.json
+config/params.php
+config/db.php
