@@ -2,40 +2,13 @@
 namespace app\helpers;
 use Yii;
 use yii\base\Object;
+use app\models\DevMessageModel;
+use app\helpers\HttpHelper;
 /**
  * 微信开发辅助类
  */
 class WchatHelper extends Object
 {
-    public function init()
-    {
-        
-    }
-    public $env = 'prod';
-    public $wxconfigTest = [
-        '66' => [//666公众号
-            'app_id' => 'wx3b2443e8747a2e43',
-            'app_secret' => 'd1dd7649fc17cbf79495951a3ed293d3',
-            'voidtoken' => 'yuanbo',
-        ],
-        // '88' => [//888公众号
-        //     'app_id' => 'wx5540adad05abc1cc',
-        //     'app_secret' => 'e23aba3e1c0fe9d63667009b3c2aa09c',
-        // ],
-    ];
-    public $wxconfig = [
-        '66' => [//666公众号
-            'app_id' => 'wx297d834cea4e3b54',
-            'app_secret' => '846b532deb073c12ed08f94c04a4b9e6',
-            'voidtoken' => 'Octmami54741425481',
-        ],
-        '88' => [//888公众号
-            'app_id' => 'wx5540adad05abc1cc',
-            'app_secret' => 'e23aba3e1c0fe9d63667009b3c2aa09c',
-            'voidtoken' => 'Octmami54741425481',
-        ],
-    ];
-
     public $postObj;
     public $fromUsername;
     public $toUsername;
@@ -44,189 +17,22 @@ class WchatHelper extends Object
     public $latitude;
     public $longitude;
 
+    private $wxconfig;
 
-    public function __construct()
+    public function init()
     {
-        parent::__construct();
-        if ($this->env == 'test') {
-            $this->wxconfig = $this->wxconfigTest;
-        }
+        $this->wxconfig = Yii::$app->params['wxconfig'];
     }
 
-
-    //实现valid验证方法：实现对接微信公众平台
-    public function valid666()
-    {
-        //接收随机字符串
-        $echoStr = $_GET["echostr"];
-        $token = $this->wxconfig['66']['voidtoken'];
-        //valid signature , option
-        //进行用户数字签名验证
-        if($this->checkSignature($token)){
-            //如果成功，则返回接收到的随机字符串
-            echo $echoStr;
-            //退出
-            exit;
-        }
-    }
-
-    //定义自动回复功能
-    public function responseMsg666()
-    {
-        //get post data, May be due to the different environments
-        //接收用户端发送过来的XML数据
-        $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
-
-        // Yii::app()->cache->set('mendian', $postStr);
-        //extract post data
-        //判断XML数据是否为空
-        if (!empty($postStr)){
-            /* libxml_disable_entity_loader is to prevent XML eXternal Entity Injection,
-               the best way is to check the validity of xml by yourself */
-            libxml_disable_entity_loader(true);
-            //通过simplexml进行xml解析
-            $this->postObj = $postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
-            //手机端  发送方帐号（一个OpenID） 
-            $this->fromUsername = $postObj->FromUserName;
-            // 获取openid
-            // Yii::$app->cache->set('openid', (string)$this->fromUsername);
-            //开发者微信号（公共号）
-            $this->toUsername = $postObj->ToUserName;
-            //接收用户发送的关键词
-            $this->keyword = trim($postObj->Content);
-
-            //时间戳
-            $this->time = time();
-            //接收用户消息类型
-            $msgType = $postObj->MsgType;
-            
-            switch ($msgType) {
-                //关注或取消关注是触发的事件消息类型
-                case 'event':
-                    $this->event();
-                    break;
-                //用户发送的文本信息类型
-                case 'text':
-                    $this->text();
-                    break;
-                //用户发送的是图片
-                // case 'image':
-                //     //回复内容
-                //     $this->image($postObj);
-                //     break;
-                // // 用户发送的语音
-                // case 'voice':
-                //     $this->voice($postObj);
-                //     break;
-                // // 用户发送的视频
-                // case 'video':
-                //     $this->video($postObj);
-                //     break;
-                // // 用户发送的视频
-                // case 'shortvideo':
-                //     $this->shortvideo($postObj);
-                //     break;
-                // //用户发送的是位置
-                // case 'location':
-                //     $this->location();
-                //     break;
-                // case 'link':
-                //     $this->link($postObj);
-                //     break;
-                default:
-                    # code...
-                    break;
-            }
-        }else {
-            echo "";
-            exit;
-        }
-    }
     /**
-     * 获取目录
+     * 微信验证服务器
      * @return [type] [description]
      */
-    public function getMenu666()
-    {
-        $token = (new WchatModel)->getToken666();
-        $url = "https://api.weixin.qq.com/cgi-bin/menu/get?access_token={$token}";
-        $res = (new WchatModel)->http_curl($url);
-        Yii::app()->cache->set('menu666', $res);
-        echo json_encode($res);
-    }
-    /**
-     * 创建菜单
-     */
-    public function menu666()
-    {
-        $token = (new WchatModel)->getToken666();
-        $url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token={$token}";
-        //定义菜单   post请求参数
-        $postArr = [
-            'button'=>[
-                
-                // 第一个一级菜单
-                
-                // url跳转按钮
-                [
-                    'name'=>urlencode('畅销榜单'),
-                    'type'=>'view',
-                    'url'=>'https://m.octmami.com/event-977.html',
-                ],
-
-                //第二个一级菜单
-                // 点击事件类型
-                [
-                    'name'=>urlencode('十月商城'),//这样防止转json中文会成\uxxx的形式
-                    'type'=>'view',
-                    'url'=>'https://m.octmami.com/',
-                ],
-                //第三个一级菜单
-                [
-                    'name'=>urlencode('我的十月'),
-                    //定义子菜单
-                    'sub_button'=>[
-                        [
-                            'name'=>urlencode('十月会员'),
-                            'type'=>'view',
-                            'url'=>'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx297d834cea4e3b54&redirect_uri=https://m.octmami.com/get_weixin_code&response_type=code&scope=snsapi_base&state=#wechat_redirect',
-                        ],
-                        // url跳转按钮
-                        [
-                            'name'=>urlencode('店员中心'),
-                            'type'=>'view',
-                            'url'=>'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx297d834cea4e3b54&redirect_uri=https://m.octmami.com/get_clerk_weixin_code&response_type=code&scope=snsapi_base&state=#wechat_redirect',
-                        ],
-                        [
-                            'name'=>urlencode('防伪查询'),
-                            'type'=>'view',
-                            'url'=>'http://www.anjismart.com/m/symm/',
-                        ],
-                        [
-                            'name'=>urlencode('全国门店'),
-                            'type'=>'view',
-                            'url'=>'https://m.octmami.com/wchatstore.html',
-                        ],
-                        [
-                            'name'=>urlencode('积分换花生'),
-                            'type'=>'view',
-                            'url'=>'http://mp.weixin.qq.com/s/xZ1Uucu3YNedpho5YegtYg',
-                        ],
-                    ]
-                ],
-            ]
-        ];
-        $postJson = urldecode(json_encode($postArr));
-        $res = (new WchatModel)->http_curl($url, 'post', 'json', $postJson);
-        var_dump($res);
-    }
-
-    //实现valid验证方法：实现对接微信公众平台
-    public function valid888()
+    public function valid()
     {
         //接收随机字符串
         $echoStr = $_GET["echostr"];
-        $token = $this->wxconfig['88']['voidtoken'];
+        $token = $this->wxconfig['voidtoken'];
         //valid signature , option
         //进行用户数字签名验证
         if($this->checkSignature($token)){
@@ -237,33 +43,31 @@ class WchatHelper extends Object
         }
     }
 
-    //定义自动回复功能
-    public function responseMsg888()
+    /**
+     * 定义自动回复功能
+     * @return [type] [description]
+     */
+    public function responseMsg()
     {
-        //get post data, May be due to the different environments
         //接收用户端发送过来的XML数据
-        $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
+        $postStr = isset($GLOBALS['HTTP_RAW_POST_DATA']) ? $GLOBALS['HTTP_RAW_POST_DATA'] : file_get_contents("php://input");
 
-        // Yii::app()->cache->set('mendian', $postStr);
-        //extract post data
-        //判断XML数据是否为空
+
         if (!empty($postStr)){
-            /* libxml_disable_entity_loader is to prevent XML eXternal Entity Injection,
-               the best way is to check the validity of xml by yourself */
+
             libxml_disable_entity_loader(true);
-            //通过simplexml进行xml解析
+            // 通过simplexml进行xml解析
             $this->postObj = $postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
-            //手机端  发送方帐号（一个OpenID） 
+            // 手机端  发送方帐号（用户OpenID） 
             $this->fromUsername = $postObj->FromUserName;
-            // 获取openid
-            // Yii::$app->cache->set('openid', (string)$this->fromUsername);
-            //开发者微信号（公共号）
+            // 开发者微信号（公众号）
             $this->toUsername = $postObj->ToUserName;
-            //接收用户发送的关键词
+            // 接收用户发送的关键词
             $this->keyword = trim($postObj->Content);
-            //时间戳
+
+            // 时间戳
             $this->time = time();
-            //接收用户消息类型
+            // 接收用户消息类型
             $msgType = $postObj->MsgType;
             
             switch ($msgType) {
@@ -284,6 +88,7 @@ class WchatHelper extends Object
             exit;
         }
     }
+
     /**
      * 事件消息
      * @return [type] [description]
@@ -294,6 +99,8 @@ class WchatHelper extends Object
     }
     /**
      * 用户发送文本消息
+     * 绑定开发者
+     * name:level:project
      */
     private function text()
     {
@@ -302,17 +109,24 @@ class WchatHelper extends Object
         {
             // 存到开发通知表  
             $result = explode(':', $this->keyword);
-            if (count($result) === 1) {
-                $result = explode('：', $this->keyword);
-            }
+            // 不开通中文符号了
+            // if (count($result) === 1) {
+            //     $result = explode('：', $this->keyword);
+            // }
             if (count($result) === 3) {
                 $name = $result[0];
                 $level = $result[1];
                 $project = $result[2];
-                // 添加/更新数据  
-                $model = new WchatModel();
-                $model->saveDev($name, $level, $project, (String)$this->fromUsername);
-                $this->sendText('开发者绑定成功');
+                $model = new DevMessageModel;
+                $model->name = $name;
+                $model->level = $level;
+                $model->project = $project;
+                $model->openid = (string)$this->fromUsername;
+                if ($model->save()) {
+                    $this->sendText('开发者绑定成功');
+                }else{
+                    $this->sendText('开发者绑定失败'.json_encode($model->errors));
+                }
             }
 
         }else{
@@ -335,21 +149,25 @@ class WchatHelper extends Object
                     <Content><![CDATA[%s]]></Content>
                     <FuncFlag>0</FuncFlag>
                     </xml>"; 
-        //回复类型，如果为“text”，代表文本类型
+        // 回复类型，text 代表文本类型
         $msgType = "text";
-        //格式化字符串
+        // 格式化字符串
         $resultStr = sprintf($textTpl, $this->fromUsername, $this->toUsername, $this->time, $msgType, $contentStr);
-        //把XML数据返回给手机端
+        // 把XML数据返回给手机端
         echo $resultStr;
     }
-    //定义checkSignature
+    /**
+     * 微信-服务器验证token
+     * @param  [type] $token [description]
+     * @return [type]        [description]
+     */
     private function checkSignature($token)
     {
         // you must define TOKEN by yourself
         //判断TOKEN密钥是否定义
         if (empty($token)) {
             //如果没有定义抛出异常
-            throw new Exception('TOKEN is not defined!');
+            throw new \Exception('TOKEN is not defined!');
         }
         //接收微信加密签名
         $signature = $_GET["signature"];
@@ -373,5 +191,61 @@ class WchatHelper extends Object
         }else{
             return false;
         }
+    }
+
+    /**
+     * 获取 token
+     * @return [type] [description]
+     */
+    public function getToken($renew = false)
+    {
+        $access_token = Yii::$app->cache->get('wx_access_token1');
+        if($renew || !$access_token){
+            $access_token_url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.
+                $this->wxconfig['app_id'].'&secret='.$this->wxconfig['app_secret'];
+            $json_data = HttpHelper::get($access_token_url);
+            $json_data = json_decode($json_data,true);
+            $access_token = $json_data['access_token'];
+            Yii::$app->cache->set('wx_access_token1', $access_token, 7000);
+        }
+        return $access_token ;
+    }
+    /**
+     * 发送模板消息
+     * @param  [type] $openId     要发送用户的openid
+     * @param  [type] $templateId 模板类型
+     * @param  [type] $data       模板消息数据
+     * @param  [type] $Snippet    摘要消息
+     * @param  string $url        点击消息是的url
+     * @return [type]             [description]
+     */
+    public function sendTemplateMsg($openId, $type, $data, $snippet = '',$url = '')
+    {
+        // 获取模板id
+        $templateId = Yii::$app->params['wxconfig']['template'][$type];
+        $token = $this->getToken();
+        $wxurl = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={$token}";
+        $arr = [
+            'touser' => $openId,//用户open_id
+            'template_id' => $templateId,
+            'url' => $url,
+            'data' => $data,
+        ];
+        $postJson = json_encode($arr);
+        $res = HttpHelper::post($wxurl, $postJson);
+        $res = json_decode($res);
+        if ($res['errcode'] != 0) {
+            $this->getToken(true);
+        }
+        // 保存发送的通知
+        Yii::$app->db->createCommand()->insert('wx_message_log', [
+                'openid' => $openId,
+                'type' => $type,
+                'snippet' => $snippet,
+                'errcode' => $res['errcode'],
+                'errmsg' => $res['errmsg'],
+                'msgid' => $res['msgid']?:'',
+            ])->execute();
+        return $res;
     }
 }
