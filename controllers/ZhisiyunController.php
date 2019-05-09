@@ -25,9 +25,23 @@ class ZhisiyunController extends Controller
 	{
 		$users = [
 			'丁冉' => '597550941f62939e2913bb43',
-			'王宁' => '591951f535ba257f1af69450',
 			'凯哥' => '591951f535ba257f1af69451',
 			'袁勃' => '591951f535ba257f1af69456',
+		];
+		$info = [
+			'position' => '嘉定总部',
+			'longitude' => 121.20988,
+			"latitude" => 31.408887,
+			"distance" => 67.59726443498181
+		];
+		return $this->render('clock', ['info' => $info, 'users' => $users]);
+	}
+	public function actionPinche()
+	{
+		$users = [
+			'袁海燕' => '5b8c903b4323599534200b5c',
+			'仲鲤' => '5938c0089924bfcf6890ac06',
+			'王敏' => '591951f535ba257f1af69460',
 		];
 		$info = [
 			'position' => '嘉定总部',

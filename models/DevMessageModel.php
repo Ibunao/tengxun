@@ -61,9 +61,9 @@ class DevMessageModel extends \yii\db\ActiveRecord
     }
     /**
      * 向开发者发送模板消息
-     * @param  [type] $level   [description]
-     * @param  [type] $info    [description]
-     * @param  [type] $project [description]
+     * @param  [type] $level   消息等级
+     * @param  [type] $info    消息内容
+     * @param  [type] $project 发送的项目
      * @return [type]          [description]
      */
     public function sendErrorMessage($level, $info, $project)
@@ -71,10 +71,9 @@ class DevMessageModel extends \yii\db\ActiveRecord
         $lev = 'null';
         if ($level == 2) {
             $lev = 'info';
-        }else ($level == 3) {
+        }elseif ($level == 3) {
             $lev = 'error';
         }
-
         $temp = self::find()
             ->select('openid')
             ->where(['project' => $project, 'level' => [5, $level]])
@@ -96,9 +95,12 @@ class DevMessageModel extends \yii\db\ActiveRecord
         // 模板类型，可以获取模板id
         $type = 'dev';
         $wchat = new WchatHelper;
+        $respData = [];
         foreach ($temp as $key => $item) {
             $openId = $item['openid'];
             $result = $wchat->sendTemplateMsg($openId, $type, $data, $info);
+            $respData[] = $result;
         }
+        return $respData;
     }
 }

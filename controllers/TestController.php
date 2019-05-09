@@ -42,4 +42,8 @@ class TestController extends Controller
 	{
 		return Yii::$app->request->getHeaders();
 	}
+	public function actionPost()
+	{
+		return $_POST;
+	}
 }

@@ -59,5 +59,6 @@ class MessageController extends Controller
         $project = $this->getParam('project', '');
         $model = new DevMessageModel;
         $result = $model->sendErrorMessage($level, $info, $project);
+        return $result;
 	}
 }

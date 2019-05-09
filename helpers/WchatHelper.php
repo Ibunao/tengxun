@@ -4,6 +4,7 @@ use Yii;
 use yii\base\Object;
 use app\models\DevMessageModel;
 use app\helpers\HttpHelper;
+use yii\web\Cookie;
 /**
  * 微信开发辅助类
  */
@@ -233,7 +234,7 @@ class WchatHelper extends Object
         ];
         $postJson = json_encode($arr);
         $res = HttpHelper::post($wxurl, $postJson);
-        $res = json_decode($res);
+        $res = json_decode($res, true);
         if ($res['errcode'] != 0) {
             $this->getToken(true);
         }
@@ -247,5 +248,36 @@ class WchatHelper extends Object
                 'msgid' => $res['msgid']?:'',
             ])->execute();
         return $res;
+    }
+
+    /**
+     * 通过code来获取openid
+     * @return [type] [description]
+     */
+    public function getOpenid()
+    {
+        $code = Yii::$app->request->get('code', '');
+        // 如果是第一次则获取openid,防止刷新报错
+        $openid = Yii::$app->request->cookies->getValue('openid');
+
+        if (empty($openid)) {
+            $appId = Yii::$app->params['wxconfig']['app_id'];
+            $appSecret = Yii::$app->params['wxconfig']['app_secret'];
+            // 通过code获取网页授权access_token和
+            $oauth2Url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid={$appId}&secret={$appSecret}&code={$code}&grant_type=authorization_code";
+
+            $oauth2 = HttpHelper::get($oauth2Url);
+
+            // 跳转
+            if (!isset($oauth2['openid'])) {
+                return false;
+            }
+            // 把openid存入到cookie
+            $cookies = Yii::$app->response->cookies;
+            $cookie = new Cookie(['name' => 'openid', 'value' => $oauth2['openid']]);
+            $cookies->add($cookie);
+            return $oauth2['openid'];
+        }
+        return $openid;
     }
 }

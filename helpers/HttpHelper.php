@@ -5,7 +5,7 @@ use yii\base\Object;
 /**
  * 请求辅助
  */
-class HttpHelper extends Object
+class HttpHelper
 {
 	 /**
      * 错误编码
