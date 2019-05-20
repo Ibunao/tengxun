@@ -51,6 +51,26 @@ class ZhisiyunController extends Controller
 		];
 		return $this->render('clock', ['info' => $info, 'users' => $users]);
 	}
+	public function actionPinche1()
+	{
+		$users = [
+			'袁海燕' => '5b8c903b4323599534200b5c',
+			'仲鲤' => '5938c0089924bfcf6890ac06',
+			'王敏' => '591951f535ba257f1af69460',
+		];
+		
+		return $this->render('clock1', ['users' => $users]);
+	}
+	public function actionClock1()
+	{
+		$info = [
+			'position' => '嘉定总部',
+			'longitude' => 121.20988,
+			"latitude" => 31.408887,
+			"distance" => 67.59726443498181
+		];
+
+	}
 	public function actionLogin()
 	{
 		$req = Yii::$app->request;

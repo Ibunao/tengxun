@@ -32,7 +32,7 @@ class WechatController extends Controller
         // 获取openid
         $openid = (new WchatHelper)->getOpenid();
         if (!empty($openid)) {
-        	$list = (new Query)->from('')
+        	$list = (new Query)->from('');
             $agent = (new AgentUserModel())->findOne(['openid' => $openid]);
             // 如果不是被拒绝
             if (!empty($agent) && $agent->status == 2) {

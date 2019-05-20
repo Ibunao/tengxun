@@ -95,7 +95,7 @@ class HttpHelper
      * 使用 cURL 实现 HTTP POST 请求
      *
      * @param       string          $url, 请求地址
-     * @param       string          $post_data, 请求的post数据，一般为经过urlencode 和用&处理后的字符串
+     * @param       string          $post_data, 请求的post数据，一般为经过urlencode 和用&处理后的字符串 或者 json
      * @param       string          $host, 服务器 host 名, 默认为空(当一台机器有多个虚拟主机时需要指定 host)
      * @param       int             $timeout, 连接超时时间, 默认为2
      *
